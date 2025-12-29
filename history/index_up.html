@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Para AlpineSki Analysis - Pro+ (Cycle)</title>
+    <title>Para AlpineSki Analysis - Pro+</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -109,7 +109,6 @@
             overflow-y: auto;
             padding: 20px;
             padding-bottom: 100px;
-            /* Space for playback bar */
         }
 
         /* Cards */
@@ -142,7 +141,7 @@
             padding: 15px;
         }
 
-        /* Welcome/Upload Screen */
+        /* Upload Screen */
         .upload-overlay {
             position: fixed;
             top: 0;
@@ -203,6 +202,12 @@
             gap: 20px;
         }
 
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
         .grid-4 {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -239,12 +244,12 @@
             height: 200px;
         }
 
-        /* Peak Detection Control Panel */
+        /* Control Panel */
         .control-panel {
             background: #f8f9fa;
             padding: 15px;
             border-radius: 6px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border: 1px solid #e9ecef;
         }
 
@@ -321,6 +326,7 @@
             background: #c0392b;
         }
 
+        /* Event List */
         .event-list {
             margin-top: 10px;
             padding: 10px;
@@ -357,6 +363,30 @@
             margin-right: 8px;
         }
 
+        .leaflet-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
         /* Interval Analysis */
         .interval-box {
             background: #f8f9fa;
@@ -368,7 +398,7 @@
 
         .interval-result-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 10px;
             margin-top: 10px;
         }
@@ -382,10 +412,10 @@
         }
 
         .interval-stat-val {
+            font-size: 18px;
             font-weight: 700;
             color: #2c3e50;
             margin-bottom: 4px;
-            font-size: 16px;
         }
 
         .interval-stat-lbl {
@@ -393,214 +423,158 @@
             color: #7f8c8d;
             text-transform: uppercase;
         }
-
-        /* Leaflet Resize Fix */
-        .leaflet-container {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #bbb;
-        }
-
-        table th {
-            color: #555;
-            font-weight: 500;
-        }
-
-        table td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            color: #333;
-        }
     </style>
 </head>
 
 <body>
-
     <!-- Upload Overlay -->
-    <div id="uploadOverlay" class="upload-overlay">
+    <div class="upload-overlay" id="uploadOverlay">
         <div class="upload-box">
-            <div style="font-size: 48px; margin-bottom: 15px;">⛷️</div>
-            <h2 style="margin-bottom: 10px;">Para Alpine Analysis</h2>
-            <p style="color: #666; margin-bottom: 25px;">Select your sensor data folder to begin</p>
-            <button class="upload-btn-mini" style="font-size: 16px; padding: 12px 30px;"
-                onclick="document.getElementById('folderInput').click()">
-                📂 Select Data Folder
-            </button>
-            <input type="file" id="folderInput" webkitdirectory directory multiple style="display: none;">
+            <h2>📂 Load Sensor Data</h2>
+            <p style="color: #666; margin: 15px 0;">Select the data folder containing CSV files</p>
+            <input type="file" id="folderInput" webkitdirectory multiple
+                style="display: block; margin: 20px auto; padding: 10px; border: 2px dashed #ddd; cursor: pointer;">
             <div id="fileList" class="file-status"></div>
         </div>
     </div>
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="sidebar-item active" id="btn-gps" onclick="switchPage('gps')" title="GPS Analysis">
-            📍
-        </div>
-        <div class="sidebar-item" id="btn-motion" onclick="switchPage('motion')" title="Motion Analysis">
-            🏃
-        </div>
-        <div class="sidebar-item" onclick="location.reload()" title="Reset">
-            🔄
-        </div>
+        <div class="sidebar-item active" id="btn-gps" onclick="switchPage('gps')" title="GPS Analysis">🌍</div>
+        <div class="sidebar-item" id="btn-motion" onclick="switchPage('motion')" title="Motion Analysis">📊</div>
     </div>
 
     <!-- Main Content -->
     <div class="main-wrapper">
+        <!-- Header -->
         <div class="header">
-            <h1>Para AlpineSki Dashboard</h1>
-            <div id="fileInfo" style="font-size: 14px; color: #666;">No Data Loaded</div>
+            <h1>Para AlpineSki Analysis Dashboard</h1>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <span id="fileInfo" style="color: #888; font-size: 14px;">No data loaded</span>
+            </div>
         </div>
 
+        <!-- Content Pages -->
         <div class="content">
             <!-- GPS Page -->
-            <div id="gpsPage" class="page active">
-                <!-- Map & 3D Course -->
-                <div class="grid-2" style="height: 400px; margin-bottom: 20px;">
-                    <div class="card" style="margin: 0; display: flex; flex-direction: column;">
-                        <div class="card-header"><span class="card-title">🗺️ Track Map</span></div>
-                        <div class="card-body" style="flex: 1; padding: 0;">
-                            <div id="map"></div>
-                        </div>
-                    </div>
-                    <div class="card" style="margin: 0; display: flex; flex-direction: column;">
-                        <div class="card-header"><span class="card-title">🌐 3D Course View</span></div>
-                        <div class="card-body" style="flex: 1; padding: 0;">
-                            <div id="gps3dChart" style="width: 100%; height: 100%;"></div>
-                        </div>
+            <div class="page active" id="gpsPage">
+                <div class="card" style="margin-bottom: 15px;">
+                    <div class="card-body" style="display: flex; justify-content: space-between; padding: 15px 20px;">
+                        <div><strong>Date:</strong> <span id="infoDate">-</span> | <strong>Time:</strong> <span
+                                id="infoTime">-</span></div>
+                        <div><strong>Device:</strong> <span id="infoDevice">-</span></div>
                     </div>
                 </div>
 
-                <!-- Info & Stats Row -->
                 <div class="grid-2">
                     <div class="card">
-                        <div class="card-header"><span class="card-title">📋 Measurement Info</span></div>
-                        <div class="card-body" style="font-size: 13px;">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                <div><strong>Date:</strong> <span id="infoDate">-</span></div>
-                                <div><strong>Time:</strong> <span id="infoTime">-</span></div>
-                                <div><strong>Device:</strong> <span id="infoDevice">-</span></div>
-                                <div><strong>Location:</strong> <span id="infoLoc">-</span></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Performance Stats (Renamed, Added Descent) -->
-                    <div class="card">
-                        <div class="card-header"><span class="card-title">📊 Performance Stats</span></div>
+                        <div class="card-header"><span class="card-title">🗺️ GPS Track (2D Map)</span></div>
                         <div class="card-body">
-                            <div class="grid-4" style="grid-template-columns: repeat(5, 1fr); gap: 5px;">
-                                <div class="stat-box">
-                                    <div class="stat-val" style="font-size: 18px;" id="statDuration">-</div>
-                                    <div class="stat-lbl">Time (min)</div>
-                                </div>
-                                <div class="stat-box">
-                                    <div class="stat-val" style="font-size: 18px;" id="statDist">-</div>
-                                    <div class="stat-lbl">Dist (km)</div>
-                                </div>
-                                <div class="stat-box">
-                                    <div class="stat-val" style="font-size: 18px;" id="statAvgSpeed">-</div>
-                                    <div class="stat-lbl">Avg (km/h)</div>
-                                </div>
-                                <div class="stat-box">
-                                    <div class="stat-val" style="font-size: 18px;" id="statMaxSpeed">-</div>
-                                    <div class="stat-lbl">Max (km/h)</div>
-                                </div>
-                                <div class="stat-box">
-                                    <div class="stat-val" style="font-size: 18px;" id="statDescent">-</div>
-                                    <div class="stat-lbl">Descent (m)</div>
-                                </div>
+                            <div id="mapContainer" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">🏔️ 3D Route Visualization</span></div>
+                        <div class="card-body">
+                            <div id="gps3dChart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">Elevation Profile (m)</div>
+                        <div class="card-body">
+                            <div id="elevationChart"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Speed Profile (km/h)</div>
+                        <div class="card-body">
+                            <div id="speedChart"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><span class="card-title">📈 Trip Statistics</span></div>
+                    <div class="card-body">
+                        <div class="grid-4">
+                            <div class="stat-box">
+                                <div class="stat-val" id="statDuration">-</div>
+                                <div class="stat-lbl">Duration (min)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-val" id="statDist">-</div>
+                                <div class="stat-lbl">Distance (km)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-val" id="statAvgSpeed">-</div>
+                                <div class="stat-lbl">Avg Speed (km/h)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-val" id="statMaxSpeed">-</div>
+                                <div class="stat-lbl">Max Speed (km/h)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-val" id="statDescent">-</div>
+                                <div class="stat-lbl">Descent (m)</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- GPS Analysis Charts (Swapped Speed & Elevation) -->
-                <div class="card">
-                    <div class="card-header">🚀 Speed</div>
-                    <div class="card-body">
-                        <div id="speedChart" style="width: 100%; height: 250px;"></div>
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">📍 Event Markers</span></div>
+                        <div class="card-body">
+                            <button id="btnMarkEvent" class="btn-detect">➕ Add Marker at Current Time</button>
+                            <div id="markerList"
+                                style="margin-top: 15px; max-height: 150px; overflow-y: auto; font-size: 13px;"></div>
+                        </div>
                     </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">⛰️ Elevation</div>
-                    <div class="card-body">
-                        <div id="elevationChart" style="width: 100%; height: 250px;"></div>
-                    </div>
-                </div>
 
-                <!-- Event & Section Recording -->
-                <div class="card" style="background: #eef7fc; border: 1px solid #cce5ff; margin-bottom: 20px;">
-                    <div class="card-header"><span class="card-title">🚩 Manual Event & Section Recording</span></div>
-                    <div class="card-body">
-                        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
-                            <button id="btnMarkEvent" class="btn-detect" style="background:#e67e22;">🚩 Mark
-                                Point</button>
-                            <div
-                                style="border-left: 1px solid #ccc; padding-left: 15px; display: flex; gap: 10px; align-items: center; flex: 1;">
-                                <span style="font-size: 14px; font-weight: 500;">Create Section:</span>
-                                <select id="gpsStartMarker" style="padding: 8px; flex: 1;">
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">✂️ Create Section</span></div>
+                        <div class="card-body">
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                <select id="gpsStartMarker" style="flex: 1; padding: 8px;">
                                     <option value="">Start</option>
                                 </select>
-                                <span>➡</span>
-                                <select id="gpsEndMarker" style="padding: 8px; flex: 1;">
+                                <select id="gpsEndMarker" style="flex: 1; padding: 8px;">
                                     <option value="">End</option>
                                 </select>
-                                <input type="text" id="newSectionName" placeholder="Section Name"
-                                    style="padding: 8px; width: 150px;">
-                                <button id="btnSaveSection" class="btn-detect" style="background:#27ae60;">💾
-                                    Save</button>
                             </div>
-                        </div>
-                        <div id="markerList" style="font-size: 12px; color: #666; max-height: 80px; overflow-y: auto;">
-                            No markers recorded yet.
+                            <input type="text" id="newSectionName" placeholder="Section Name"
+                                style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <button id="btnSaveSection" class="btn-detect" style="width: 100%;">💾 Save
+                                Section</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section Performance Stats Table (New) -->
                 <div class="card">
-                    <div class="card-header"><span class="card-title">📉 Section Performance</span></div>
-                    <div class="card-body" style="padding: 0;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: center;">
-                            <thead style="background: #f8f9fa; border-bottom: 1px solid #ddd;">
-                                <tr>
-                                    <th style="padding: 10px;">Name</th>
-                                    <th>Duration (s)</th>
-                                    <th>Distance (m)</th>
-                                    <th>Avg Speed (km/h)</th>
-                                    <th>Max Speed (km/h)</th>
-                                    <th>Descent (m)</th>
+                    <div class="card-header"><span class="card-title">🎯 Saved Sections</span></div>
+                    <div class="card-body">
+                        <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8f9fa; text-align: left;">
+                                    <th style="padding: 8px; border-bottom: 2px solid #ddd;">Name</th>
+                                    <th style="padding: 8px; border-bottom: 2px solid #ddd;">Duration (s)</th>
+                                    <th style="padding: 8px; border-bottom: 2px solid #ddd;">Distance (m)</th>
+                                    <th style="padding: 8px; border-bottom: 2px solid #ddd;">Avg Speed (km/h)</th>
+                                    <th style="padding: 8px; border-bottom: 2px solid #ddd;">Max Speed (km/h)</th>
+                                    <th style="padding: 8px; border-bottom: 2px solid #ddd;">Descent (m)</th>
                                 </tr>
                             </thead>
-                            <tbody id="sectionStatsTable">
-                                <tr>
-                                    <td colspan="6" style="padding: 20px; color: #999;">No sections saved yet</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="sectionStatsTable"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
             <!-- Motion Page -->
-            <div id="motionPage" class="page">
-                <!-- Top Controls: Section Selection -->
+            <div class="page" id="motionPage">
                 <div class="card" style="margin-bottom: 15px;">
                     <div class="card-body"
                         style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
@@ -617,7 +591,43 @@
                     </div>
                 </div>
 
-                <!-- Multi-Event Detection -->
+                <!-- Filter Selection -->
+                <div class="card">
+                    <div class="card-header"><span class="card-title">🔧 Data Filtering</span></div>
+                    <div class="card-body">
+                        <div class="control-row">
+                            <div class="control-group">
+                                <label>Filter Type</label>
+                                <select id="filterType" style="width: 150px;">
+                                    <option value="butterworth">Butterworth</option>
+                                    <option value="kalman">Kalman</option>
+                                    <option value="gcv_spline">GCV Spline</option>
+                                    <option value="loess">LOESS</option>
+                                    <option value="gaussian">Gaussian</option>
+                                    <option value="median">Median</option>
+                                    <option value="butterworth_speed">Butterworth on Speed</option>
+                                </select>
+                            </div>
+                            <div class="control-group" id="param1Group">
+                                <label id="param1Label">Cut-off Frequency (Hz)</label>
+                                <input type="number" id="param1" value="6" step="0.1" style="width: 100px;">
+                            </div>
+                            <div class="control-group" id="param2Group">
+                                <label id="param2Label">Order</label>
+                                <input type="number" id="param2" value="4" step="1" style="width: 80px;">
+                            </div>
+                            <div class="control-group">
+                                <label>&nbsp;</label>
+                                <button class="btn-detect" id="btnApplyFilter">🔄 Apply Filter</button>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #666;" id="filterDescription">
+                            Butterworth filter - Standard biomechanics filter with customizable frequency and order
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Detection with Multiple Types -->
                 <div class="card">
                     <div class="card-header"><span class="card-title">🎯 Multi-Event Detection</span></div>
                     <div class="card-body">
@@ -625,8 +635,7 @@
                             <div class="control-row">
                                 <div class="control-group">
                                     <label>Event Name</label>
-                                    <input type="text" id="eventName" placeholder="e.g., turn_left"
-                                        style="width: 120px;">
+                                    <input type="text" id="eventName" placeholder="e.g., turn_left" style="width: 120px;">
                                 </div>
                                 <div class="control-group">
                                     <label>Variable</label>
@@ -671,27 +680,23 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Event List -->
                         <div class="event-list" id="eventList">
                             <div style="font-size: 12px; color: #999; text-align: center;">No events detected yet</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Cycle & Interval Analysis -->
+                <!-- Interval Analysis -->
                 <div class="card">
-                    <div class="card-header"><span class="card-title">📏 Cycle & Interval Analysis</span></div>
+                    <div class="card-header"><span class="card-title">📏 Interval Analysis (Between Events)</span></div>
                     <div class="card-body">
                         <div class="control-row">
                             <div class="control-group">
                                 <label>Start Event</label>
                                 <select id="intervalStartEvent" style="width: 120px;">
                                     <option value="">Select Event</option>
-                                </select>
-                            </div>
-                            <div class="control-group">
-                                <label>Middle Event (Opt)</label>
-                                <select id="intervalIntermediateEvent" style="width: 120px;">
-                                    <option value="">None</option>
                                 </select>
                             </div>
                             <div class="control-group">
@@ -702,12 +707,7 @@
                             </div>
                             <div class="control-group">
                                 <label>&nbsp;</label>
-                                <button class="btn-detect" id="btnAnalyzeIntervals">📊 Analyze Cycles</button>
-                            </div>
-                            <div class="control-group">
-                                <label>&nbsp;</label>
-                                <button class="btn-detect" id="btnExport" style="background: #8e44ad;">💾 Export
-                                    CSV</button>
+                                <button class="btn-detect" id="btnAnalyzeIntervals">📊 Analyze Intervals</button>
                             </div>
                         </div>
 
@@ -715,18 +715,15 @@
                         <div class="interval-box" id="intervalResults" style="display: none;">
                             <h4 style="margin-bottom: 10px; font-size: 14px;">Interval Summary</h4>
                             <div id="intervalSummary" style="font-size: 13px; color: #666; margin-bottom: 10px;"></div>
-
-                            <!-- Spatio-temporal Metrics Table -->
-                            <div class="interval-result-grid" id="cycleStats" style="margin-bottom: 20px;"></div>
-
-                            <div id="intervalChart" style="height: 300px; margin-bottom: 15px;"></div>
+                            <div id="intervalChart" style="height: 250px; margin-bottom: 15px;"></div>
+                            <div id="intervalSequenceChart" style="height: 400px;"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Analysis Results (General) -->
+                <!-- Analysis Results -->
                 <div class="card">
-                    <div class="card-header"><span class="card-title">📊 Detection Statistics (Current)</span></div>
+                    <div class="card-header"><span class="card-title">📊 Detection Statistics</span></div>
                     <div class="card-body">
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                             <div class="stat-box" style="background:#f9f9f9; border-radius:4px;">
@@ -834,7 +831,7 @@
         </div>
     </div>
 
-    <script src="dashboard_f.js"></script>
+    <script src="dashboard_up.js"></script>
 </body>
 
 </html>

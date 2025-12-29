@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Para AlpineSki Analysis - Pro+ (Cycle)</title>
+    <title>Para AlpineSki Analysis - Pro</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -321,6 +321,7 @@
             background: #c0392b;
         }
 
+        /* Event List */
         .event-list {
             margin-top: 10px;
             padding: 10px;
@@ -357,6 +358,30 @@
             margin-right: 8px;
         }
 
+        /* Leaflet Resize Fix */
+        .leaflet-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #bbb;
+        }
+
         /* Interval Analysis */
         .interval-box {
             background: #f8f9fa;
@@ -382,6 +407,7 @@
         }
 
         .interval-stat-val {
+            font-size: 18px;
             font-weight: 700;
             color: #2c3e50;
             margin-bottom: 4px;
@@ -392,30 +418,6 @@
             font-size: 11px;
             color: #7f8c8d;
             text-transform: uppercase;
-        }
-
-        /* Leaflet Resize Fix */
-        .leaflet-container {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #bbb;
         }
 
         table th {
@@ -476,7 +478,7 @@
                     <div class="card" style="margin: 0; display: flex; flex-direction: column;">
                         <div class="card-header"><span class="card-title">🗺️ Track Map</span></div>
                         <div class="card-body" style="flex: 1; padding: 0;">
-                            <div id="map"></div>
+                            <div id="mapContainer" style="width: 100%; height: 100%;"></div>
                         </div>
                     </div>
                     <div class="card" style="margin: 0; display: flex; flex-direction: column;">
@@ -534,13 +536,13 @@
                 <div class="card">
                     <div class="card-header">🚀 Speed</div>
                     <div class="card-body">
-                        <div id="speedChart" style="width: 100%; height: 250px;"></div>
+                        <div id="speedChart" style="height: 200px;"></div>
                     </div>
                 </div>
                 <div class="card">
                     <div class="card-header">⛰️ Elevation</div>
                     <div class="card-body">
-                        <div id="elevationChart" style="width: 100%; height: 250px;"></div>
+                        <div id="elevationChart" style="height: 200px;"></div>
                     </div>
                 </div>
 
@@ -617,7 +619,43 @@
                     </div>
                 </div>
 
-                <!-- Multi-Event Detection -->
+                <!-- Filter Selection (Added from Dashboard U) -->
+                <div class="card">
+                    <div class="card-header"><span class="card-title">🔧 Data Filtering</span></div>
+                    <div class="card-body">
+                        <div class="control-row">
+                            <div class="control-group">
+                                <label>Filter Type</label>
+                                <select id="filterType" style="width: 150px;">
+                                    <option value="butterworth">Butterworth</option>
+                                    <option value="kalman">Kalman</option>
+                                    <option value="gcv_spline">GCV Spline</option>
+                                    <option value="loess">LOESS</option>
+                                    <option value="gaussian">Gaussian</option>
+                                    <option value="median">Median</option>
+                                    <option value="butterworth_speed">Butterworth on Speed</option>
+                                </select>
+                            </div>
+                            <div class="control-group" id="param1Group">
+                                <label id="param1Label">Cut-off Frequency (Hz)</label>
+                                <input type="number" id="param1" value="6" step="0.1" style="width: 100px;">
+                            </div>
+                            <div class="control-group" id="param2Group">
+                                <label id="param2Label">Order</label>
+                                <input type="number" id="param2" value="4" step="1" style="width: 80px;">
+                            </div>
+                            <div class="control-group">
+                                <label>&nbsp;</label>
+                                <button class="btn-detect" id="btnApplyFilter">🔄 Apply Filter</button>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #666;" id="filterDescription">
+                            Butterworth filter - Standard biomechanics filter with customizable frequency and order
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-Event Detection (Added from Dashboard U) -->
                 <div class="card">
                     <div class="card-header"><span class="card-title">🎯 Multi-Event Detection</span></div>
                     <div class="card-body">
@@ -671,13 +709,15 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Event List -->
                         <div class="event-list" id="eventList">
                             <div style="font-size: 12px; color: #999; text-align: center;">No events detected yet</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Cycle & Interval Analysis -->
+                <!-- Cycle & Interval Analysis (Added from Dashboard U) -->
                 <div class="card">
                     <div class="card-header"><span class="card-title">📏 Cycle & Interval Analysis</span></div>
                     <div class="card-body">
@@ -704,11 +744,6 @@
                                 <label>&nbsp;</label>
                                 <button class="btn-detect" id="btnAnalyzeIntervals">📊 Analyze Cycles</button>
                             </div>
-                            <div class="control-group">
-                                <label>&nbsp;</label>
-                                <button class="btn-detect" id="btnExport" style="background: #8e44ad;">💾 Export
-                                    CSV</button>
-                            </div>
                         </div>
 
                         <!-- Interval Results -->
@@ -717,7 +752,9 @@
                             <div id="intervalSummary" style="font-size: 13px; color: #666; margin-bottom: 10px;"></div>
 
                             <!-- Spatio-temporal Metrics Table -->
-                            <div class="interval-result-grid" id="cycleStats" style="margin-bottom: 20px;"></div>
+                            <div class="interval-result-grid" id="cycleStats" style="margin-bottom: 20px;">
+                                <!-- Stats will be injected here -->
+                            </div>
 
                             <div id="intervalChart" style="height: 300px; margin-bottom: 15px;"></div>
                         </div>
@@ -726,7 +763,7 @@
 
                 <!-- Analysis Results (General) -->
                 <div class="card">
-                    <div class="card-header"><span class="card-title">📊 Detection Statistics (Current)</span></div>
+                    <div class="card-header"><span class="card-title">📊 Detection Statistics (Raw Events)</span></div>
                     <div class="card-body">
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                             <div class="stat-box" style="background:#f9f9f9; border-radius:4px;">
@@ -834,7 +871,7 @@
         </div>
     </div>
 
-    <script src="dashboard_f.js"></script>
+    <script src="dashboard_u.js"></script>
 </body>
 
 </html>
